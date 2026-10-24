@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block body %}<div class="phone">
+<div class="card"><button class="grey" onclick="loc()">📍 Update my location</button> <span id="ls" class="muted"></span></div>
+<h2>Assigned tasks</h2>
+{% for t in active %}<div class="card"><b>{{ t.task_code }}</b> <span class="tag {{ t.priority }}">{{ t.priority }}</span> <span class="tag {{ t.status }}">{{ t.status }}</span>
+<p><b>{{ t.type }}</b> — {{ t.description }}<br><span class="muted">📍 {{ t.location }} · {{ t.assigned_at }}</span></p>
+<a class="btn grey" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ t.location|urlencode }}">Navigate</a>
+{% if t.photo %}<a class="btn grey" target="_blank" href="/static/{{ t.photo }}">Citizen photo</a>{% endif %}
+<form method="post" action="/police/task/{{ t.id }}/update" enctype="multipart/form-data" style="margin-top:10px">
+<select name="status"><option {{ 'selected' if t.status=='Assigned' }}>Assigned</option><option {{ 'selected' if t.status=='In Progress' }}>In Progress</option><option>Completed</option></select>
+<input name="remarks" placeholder="Remarks" value="{{ t.remarks or '' }}"><input type="file" name="evidence" accept="image/*" capture="environment"><button>Update status</button></form></div>
+{% else %}<div class="card muted">No active tasks.</div>{% endfor %}
+<h2>Ask AI assistant</h2><div class="card"><div class="chat" id="chat" style="height:160px"></div><div style="display:flex;gap:8px"><input id="q" placeholder="e.g. how many tasks are pending?" onkeydown="if(event.key=='Enter')send()"><button onclick="send()">Ask</button></div></div>
+<h2>History</h2><div class="card"><table><tr><th>ID</th><th>Issue</th><th>Time taken</th></tr>
+{% for t in history %}<tr><td>{{ t.task_code }}</td><td>{{ t.type }}<br><span class="muted">{{ t.remarks or '' }}</span></td><td>{{ t.time_taken }} min</td></tr>{% else %}<tr><td colspan="3" class="muted">None yet</td></tr>{% endfor %}</table></div></div>
+<script>function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function mdToHtml(s){return escapeHtml(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/(^|[^*])\*(?!\*)([^*]+)\*(?!\*)/g,'$1<em>$2</em>').replace(/\n/g,'<br>')}
+async function send(){const v=q.value.trim();if(!v)return;q.value='';chat.innerHTML+=`<div class="me">${escapeHtml(v)}</div>`;const r=await (await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:v})})).json();chat.innerHTML+=`<div class="bot">${mdToHtml(r.answer)}</div>`;chat.scrollTop=1e9}
+function loc(){navigator.geolocation.getCurrentPosition(p=>{fetch('/police/location',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:p.coords.latitude,lng:p.coords.longitude})});ls.textContent='Location updated'},()=>ls.textContent='Denied')}</script>{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Analytics{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<div class="grid g3">
+  <div class="card kpi-card"><div class="ic">{{ icon('alert', 20) }}</div><div><div class="muted">Violations (7d)</div><div class="kpi" id="a1">-</div></div></div>
+  <div class="card kpi-card"><div class="ic">{{ icon('check-shield', 20) }}</div><div><div class="muted">Avg completion (min)</div><div class="kpi" id="a2">-</div></div></div>
+  <div class="card kpi-card"><div class="ic">{{ icon('trend', 20) }}</div><div><div class="muted">Busiest lane</div><div class="kpi" id="a3">-</div></div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>{{ icon('trend') }}Lane density over time</h2><canvas id="c1"></canvas></div>
+  <div class="card"><h2>{{ icon('alert') }}Violations by type (7d)</h2><canvas id="c2"></canvas></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>fetch('/api/analytics').then(r=>r.json()).then(d=>{const s=d.stats;a1.textContent=s.violations_total;a2.textContent=s.avg_completion_min??'-';a3.textContent=s.busiest_lane??'-';
+const col={north:'#4f46e5',east:'#dc2626',south:'#16a34a',west:'#d97706'};
+Chart.defaults.font.family="'Inter',system-ui,sans-serif";Chart.defaults.color='#64748b';
+new Chart(c1,{type:'line',data:{labels:d.density.map(x=>x.ts.slice(11)),datasets:Object.keys(col).map((k,i)=>({label:(d.lane_names||[])[i]||k,data:d.density.map(x=>x[k]),borderColor:col[k],backgroundColor:col[k]+'22',tension:.35,fill:false}))},options:{plugins:{legend:{labels:{boxWidth:10,usePointStyle:true}}}}});
+new Chart(c2,{type:'bar',data:{labels:Object.keys(s.violations_by_type),datasets:[{label:'count',data:Object.values(s.violations_by_type),backgroundColor:'#4f46e5',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});})</script>
+{% endblock %}

@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block body %}<div class="card"><h2>My Reports</h2><table><tr><th>#</th><th>Type</th><th>Location</th><th>Priority</th><th>Status</th><th>Officer</th><th>Time</th></tr>
+{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.type }}</td><td>{{ r.location }}</td><td><span class="tag {{ r.priority }}">{{ r.priority }}</span></td><td><span class="tag {{ r.status }}">{{ r.status }}</span></td><td>{{ r.officer or '-' }}</td><td>{{ r.created_at }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No reports yet.</td></tr>{% endfor %}</table></div>{% endblock %}

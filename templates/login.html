@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% from "_icons.html" import icon %}{% block body %}
+<div class="auth-wrap"><div class="auth-shell">
+ <div class="auth-side">
+  <a class="brand" href="/"><span class="logo">{{ icon('radio', 18) }}</span>TrafficAI</a>
+  <div>
+   <h2>Real-time traffic intelligence, from camera to command.</h2>
+   <p>Sign in to monitor live density, control signals, and dispatch officers in seconds.</p>
+   <ul>
+    <li><span class="ic">{{ icon('trend', 17) }}</span> Live AI lane density &amp; adaptive signals</li>
+    <li><span class="ic">{{ icon('radio', 17) }}</span> Emergency vehicle priority detection</li>
+    <li><span class="ic">{{ icon('camera', 17) }}</span> Automatic violation capture with evidence</li>
+   </ul>
+  </div>
+  <div class="foot">© 2026 TrafficAI · Smart Traffic Management</div>
+ </div>
+ <div class="auth-form-col"><div class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="sub">Sign in to continue to your console.</p>
+  <form method="post">
+   <label class="field-label">Username</label><input name="username" placeholder="Enter your username" required>
+   <label class="field-label">Password</label><input name="password" type="password" placeholder="Enter your password" required>
+   <button>Sign in</button>
+  </form>
+  <div class="demo-hint">Demo accounts — <b>admin</b>/admin123 · <b>police1</b>/police123 · <b>citizen</b>/citizen123</div>
+  <p class="auth-foot">New citizen? <a href="/register">Create an account</a></p>
+ </div></div>
+</div></div>
+{% endblock %}

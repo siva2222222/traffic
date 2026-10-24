@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% from "_icons.html" import icon %}{% block body %}
+<section class="hero-section">
+ <span class="eyebrow">{{ icon('spark', 14) }} AI-powered · Real-time</span>
+ <h1>Smarter traffic, from live video to instant response.</h1>
+ <p class="lead">One platform for adaptive signal control, emergency priority, automatic violation capture and citizen reporting — all driven by computer vision.</p>
+ <div class="hero-cta">
+  <a class="btn" href="/login">Login to console {{ icon('arrow-right', 15) }}</a>
+  <a class="btn grey" href="/register">Citizen registration</a>
+ </div>
+</section>
+
+<div class="stat-strip">
+ <div><div class="n">4</div><div class="l">Lane directions tracked</div></div>
+ <div><div class="n">24/7</div><div class="l">Live monitoring</div></div>
+ <div><div class="n">&lt;1s</div><div class="l">Signal reaction time</div></div>
+ <div><div class="n">100%</div><div class="l">Evidence-backed fines</div></div>
+</div>
+
+<div class="grid g3 feature-grid">
+ <div class="card feature"><div class="ic">{{ icon('doc', 21) }}</div><h3>Public Portal</h3><p class="muted">Report accidents, breakdowns, illegal parking and obstructions with photo and GPS location, then track status live.</p></div>
+ <div class="card feature"><div class="ic">{{ icon('dashboard', 21) }}</div><h3>Admin Console</h3><p class="muted">Live AI feed with lane density, adaptive signal state, violations with evidence, task assignment, analytics and an AI assistant.</p></div>
+ <div class="card feature"><div class="ic">{{ icon('check-shield', 21) }}</div><h3>Officer App</h3><p class="muted">Mobile-friendly task list — update status, upload evidence photos and review task history on the go.</p></div>
+</div>
+
+<footer class="site-footer">TrafficAI — AI-Based Smart Traffic Management System</footer>
+{% endblock %}

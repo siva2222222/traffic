@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% from "_icons.html" import icon %}{% block body %}
+<div class="auth-wrap"><div class="auth-shell">
+ <div class="auth-side">
+  <a class="brand" href="/"><span class="logo">{{ icon('radio', 18) }}</span>TrafficAI</a>
+  <div>
+   <h2>Report issues. Track resolution. In real time.</h2>
+   <p>Create a citizen account to report accidents, breakdowns and hazards, and follow every update.</p>
+   <ul>
+    <li><span class="ic">{{ icon('pin', 17) }}</span> One-tap location capture with GPS</li>
+    <li><span class="ic">{{ icon('camera', 17) }}</span> Attach photo or video evidence</li>
+    <li><span class="ic">{{ icon('bell', 17) }}</span> Live status updates on your report</li>
+   </ul>
+  </div>
+  <div class="foot">© 2026 TrafficAI · Smart Traffic Management</div>
+ </div>
+ <div class="auth-form-col"><div class="auth-card">
+  <h1>Create your account</h1>
+  <p class="sub">Join as a citizen to start reporting.</p>
+  <form method="post">
+   <label class="field-label">Full name</label><input name="name" placeholder="Your full name" required>
+   <label class="field-label">Username</label><input name="username" placeholder="Choose a username" required>
+   <label class="field-label">Phone (optional)</label><input name="phone" placeholder="Phone number">
+   <label class="field-label">Password</label><input name="password" type="password" placeholder="Min. 6 characters" required>
+   <button>Create account</button>
+  </form>
+  <p class="auth-foot">Already have an account? <a href="/login">Sign in</a></p>
+ </div></div>
+</div></div>
+{% endblock %}

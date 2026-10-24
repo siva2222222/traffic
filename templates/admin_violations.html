@@ -1,0 +1,62 @@
+{% extends "base.html" %}{% block title %}Violations{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.v-stats{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.v-stat{flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.v-stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.v-stat .n{font-size:24px;font-weight:800;margin-top:4px}
+.v-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.v-toolbar select{width:auto;margin:0}
+.v-toolbar form{margin:0;display:flex;gap:8px;flex-wrap:wrap}
+.v-toolbar .btn{padding:9px 14px;font-size:13px}
+.del-form{margin:0;display:inline}
+.del-btn{background:transparent;color:var(--danger);border:1px solid transparent;padding:6px 8px;width:auto;margin:0;box-shadow:none}
+.del-btn:hover{background:var(--danger-light);border-color:#f3c6c6}
+</style>
+<div class="card"><h2>{{ icon('alert') }}Violations &amp; alerts</h2>
+
+<div class="v-stats">
+  <div class="v-stat"><div class="l">Total shown</div><div class="n">{{ rows|length }}</div></div>
+  <div class="v-stat"><div class="l">Fines total</div><div class="n">₹{{ rows|sum(attribute='fine') }}</div></div>
+  <div class="v-stat"><div class="l">Types tracked</div><div class="n">{{ types|length }}</div></div>
+</div>
+
+<div class="v-toolbar">
+  <form method="get">
+    <select name="type" onchange="this.form.submit()">
+      <option value="">All types</option>
+      {% for t in types %}<option {{ 'selected' if t==sel }}>{{ t }}</option>{% endfor %}
+    </select>
+  </form>
+  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn grey" href="/admin/export/daily.csv">Daily CSV</a>
+    <a class="btn grey" href="/admin/export/daily.pdf">Daily PDF</a>
+    <a class="btn grey" href="/admin/export/weekly.pdf">Weekly PDF</a>
+    <a class="btn grey" href="/admin/export/monthly.pdf">Monthly PDF</a>
+  </form>
+  <form class="del-form" method="post" action="/admin/violations/delete_all"
+        onsubmit="return confirm('Delete {{ ('all '+sel) if sel else 'ALL' }} violations? This cannot be undone.')">
+    {% if sel %}<input type="hidden" name="type" value="{{ sel }}">{% endif %}
+    <button class="red" type="submit">{{ icon('trash', 14) }} Delete {{ ('all ' + sel) if sel else 'all' }}</button>
+  </form>
+</div>
+
+<div style="overflow-x:auto">
+<table><tr><th>Time</th><th>Violation</th><th>Vehicle</th><th>Lane</th><th>Speed</th><th>Fine</th><th>Evidence</th><th></th></tr>
+{% for r in rows %}<tr>
+  <td>{{ r.ts }}</td>
+  <td><span class="tag Red">{{ r.vtype }}</span></td>
+  <td>{{ r.vehicle_class }} #{{ r.track_id }}</td>
+  <td>{{ r.lane or '-' }}</td>
+  <td>{{ r.speed_kmh or '-' }}</td>
+  <td>₹{{ r.fine }}</td>
+  <td>{% if r.evidence %}<a href="/static/{{ r.evidence }}" target="_blank"><img class="thumb" src="/static/{{ r.evidence }}"></a>{% else %}-{% endif %}</td>
+  <td>
+    <form class="del-form" method="post" action="/admin/violations/{{ r.id }}/delete" onsubmit="return confirm('Delete this violation record?')">
+      <button class="del-btn" type="submit" title="Delete">{{ icon('trash', 15) }}</button>
+    </form>
+  </td>
+</tr>{% else %}<tr><td colspan="8" class="muted">No violations recorded.</td></tr>{% endfor %}
+</table>
+</div>
+</div>{% endblock %}

@@ -1,0 +1,12 @@
+{
+  "_note": "PLACEHOLDER geometry (normalized 0-1). Run: python calibrate.py your_video.mp4  to draw your own.",
+  "meters_per_pixel": 0.05,
+  "lanes": {
+    "North": {"polygon": [[0.36,0.0],[0.50,0.0],[0.50,0.40],[0.36,0.40]], "direction": [0,1],  "stop_line": [[0.36,0.40],[0.50,0.40]], "num_lanes": 2},
+    "East":  {"polygon": [[0.60,0.36],[1.0,0.36],[1.0,0.50],[0.60,0.50]], "direction": [-1,0], "stop_line": [[0.60,0.36],[0.60,0.50]], "num_lanes": 2},
+    "South": {"polygon": [[0.50,0.60],[0.64,0.60],[0.64,1.0],[0.50,1.0]], "direction": [0,-1], "stop_line": [[0.50,0.60],[0.64,0.60]], "num_lanes": 2},
+    "West":  {"polygon": [[0.0,0.50],[0.40,0.50],[0.40,0.64],[0.0,0.64]], "direction": [1,0],  "stop_line": [[0.40,0.50],[0.40,0.64]], "num_lanes": 2}
+  },
+  "no_parking_zones": [[[0.02,0.05],[0.28,0.05],[0.28,0.22],[0.02,0.22]]],
+  "restricted_zones": [[[0.52,0.02],[0.58,0.02],[0.58,0.34],[0.52,0.34]]]
+}

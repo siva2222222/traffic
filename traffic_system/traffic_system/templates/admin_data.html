@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block title %}Data{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.d-media{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.d-media .chip{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;color:var(--ink-2);font-weight:600;box-shadow:var(--shadow-sm)}
+.d-media .chip b{color:var(--primary);margin-right:4px}
+.export-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+</style>
+<div class="card">
+<h2>{{ icon('db') }}Data layer (storage &amp; logs)</h2>
+<div class="d-media">
+  <div class="chip"><b>{{ media.get('video', 0) }}</b>uploaded videos</div>
+  <div class="chip"><b>{{ media.get('audio', 0) }}</b>audio files</div>
+</div>
+<div style="overflow-x:auto">
+<table><tr><th>Store</th><th>Table</th><th>Records</th><th>Last entry</th><th>Description</th><th></th></tr>
+{% for r in rows %}<tr><td><b>{{ r.title }}</b></td><td>{{ r.table }}</td><td>{{ r.count }}</td><td>{{ r.last or '-' }}</td><td class="muted">{{ r.desc }}</td>
+<td><a class="btn grey" href="/admin/export/table/{{ r.table }}.csv">CSV</a></td></tr>{% endfor %}</table>
+</div>
+<div class="export-row">
+  <a class="btn" href="/admin/export/daily.pdf">{{ icon('doc', 14) }} Daily PDF</a>
+  <a class="btn" href="/admin/export/weekly.pdf">{{ icon('doc', 14) }} Weekly PDF</a>
+  <a class="btn" href="/admin/export/monthly.pdf">{{ icon('doc', 14) }} Monthly PDF</a>
+</div>
+</div>{% endblock %}

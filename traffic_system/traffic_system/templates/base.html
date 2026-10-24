@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Smart Traffic Management{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234f46e5'/%3E%3Ccircle cx='12' cy='7' r='2.1' fill='%23fff'/%3E%3Ccircle cx='12' cy='12.5' r='2.1' fill='%23fbbf24'/%3E%3Ccircle cx='12' cy='18' r='2.1' fill='%2322c55e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+{% from "_icons.html" import icon %}
+{% if user %}
+<div class="shell">
+ <aside class="sidebar">
+  <a class="brand" href="/"><span class="logo">{{ icon('radio', 17) }}</span> TrafficAI</a>
+  <nav>
+  {% if user.role=='admin' %}
+   <a href="/admin" class="{{ 'active' if request.path=='/admin' }}">{{ icon('dashboard') }}Dashboard</a>
+   <a href="/admin/reports" class="{{ 'active' if request.path.startswith('/admin/reports') }}">{{ icon('inbox') }}Reports</a>
+   <a href="/admin/tasks" class="{{ 'active' if request.path.startswith('/admin/tasks') }}">{{ icon('tasks') }}Tasks</a>
+   <a href="/admin/violations" class="{{ 'active' if request.path.startswith('/admin/violations') }}">{{ icon('alert') }}Violations</a>
+   <a href="/admin/analytics" class="{{ 'active' if request.path.startswith('/admin/analytics') }}">{{ icon('trend') }}Analytics</a>
+   <a href="/admin/assistant" class="{{ 'active' if request.path.startswith('/admin/assistant') }}">{{ icon('bot') }}AI Assistant</a>
+   <a href="/admin/video" class="{{ 'active' if request.path.startswith('/admin/video') }}">{{ icon('video') }}Video Detection</a>
+   <a href="/admin/source" class="{{ 'active' if request.path.startswith('/admin/source') }}">{{ icon('spark') }}Audio Test</a>
+   <a href="/admin/data" class="{{ 'active' if request.path.startswith('/admin/data') }}">{{ icon('db') }}Data</a>
+  {% elif user.role=='police' %}
+   <a href="/police" class="{{ 'active' if request.path.startswith('/police') }}">{{ icon('check-shield') }}My Tasks</a>
+  {% else %}
+   <a href="/report" class="{{ 'active' if request.path.startswith('/report') }}">{{ icon('doc') }}Report Issue</a>
+   <a href="/my-reports" class="{{ 'active' if request.path.startswith('/my-reports') }}">{{ icon('inbox') }}My Reports</a>
+  {% endif %}
+  </nav>
+  <div class="sidebar-foot">
+   <div class="user-chip"><div class="avatar">{{ user.name[0]|upper }}</div><div><div class="u-name">{{ user.name }}</div><div class="u-role">{{ user.role }}</div></div></div>
+   <a class="logout-link" href="/logout" title="Log out">{{ icon('logout', 15) }}</a>
+  </div>
+ </aside>
+ <div class="main-col">
+  <header class="topbar">
+   <div class="topbar-title">{{ {'admin':'Admin Console','police':'Officer Console'}.get(user.role, 'Citizen Portal') }}</div>
+   <div class="topbar-actions"><a class="icon-btn" href="/notifications">{{ icon('bell', 16) }}{% if unread %}<span class="badge">{{ unread }}</span>{% endif %}</a></div>
+  </header>
+{% else %}
+<header class="public-nav"><a class="brand" href="/"><span class="logo">{{ icon('radio', 16) }}</span>TrafficAI</a>
+<nav><a href="/login">Login</a><a class="btn" href="/register">Get started</a></nav></header>
+{% endif %}
+  {% with m=get_flashed_messages() %}{% if m %}<div class="flash">{% for x in m %}<p>{{ x }}</p>{% endfor %}</div>{% endif %}{% endwith %}
+  <main class="{{ 'content' if user else 'public-main' }}">{% block body %}{% endblock %}</main>
+{% if user %}
+ </div>
+</div>
+{% endif %}
+</body></html>
