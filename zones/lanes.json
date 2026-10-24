@@ -1,0 +1,106 @@
+{
+  "_note": "video5.mp4: one-way road, 4 lanes, no signal. Lanes are named North/East/South/West (left to right) like the architecture diagram. Rename / redraw them with 'Edit lanes on video' on the Dashboard. Each vehicle's real direction of travel is shown by its arrow and the DIRECTION panel on the video. Lane flow is learned automatically.",
+  "signalized": false,
+  "stabilize": true,
+  "speed_limit_kmh": 80,
+  "perspective": {
+    "k": 7.3,
+    "y0": -0.1481
+  },
+  "lanes": {
+    "North": {
+      "polygon": [
+        [
+          0.3615,
+          0.1667
+        ],
+        [
+          0.4302,
+          0.1667
+        ],
+        [
+          0.2062,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.7222
+        ]
+      ],
+      "num_lanes": 1
+    },
+    "East": {
+      "polygon": [
+        [
+          0.4302,
+          0.1667
+        ],
+        [
+          0.5104,
+          0.1667
+        ],
+        [
+          0.5229,
+          1.0
+        ],
+        [
+          0.2062,
+          1.0
+        ]
+      ],
+      "num_lanes": 1
+    },
+    "South": {
+      "polygon": [
+        [
+          0.5104,
+          0.1667
+        ],
+        [
+          0.6,
+          0.1667
+        ],
+        [
+          0.8385,
+          1.0
+        ],
+        [
+          0.5229,
+          1.0
+        ]
+      ],
+      "num_lanes": 1
+    },
+    "West": {
+      "polygon": [
+        [
+          0.6,
+          0.1667
+        ],
+        [
+          0.7188,
+          0.1667
+        ],
+        [
+          1.0,
+          0.6111
+        ],
+        [
+          1.0,
+          1.0
+        ],
+        [
+          0.8385,
+          1.0
+        ]
+      ],
+      "num_lanes": 1
+    }
+  },
+  "no_parking_zones": [],
+  "restricted_zones": []
+}

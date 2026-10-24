@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block title %}Audio Test{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.result-box{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--surface-alt);border:1px solid var(--border);font-size:13.5px}
+</style>
+<div class="grid g2">
+  <div class="card">
+    <h2>{{ icon('spark') }}Siren / audio test</h2>
+    <p class="muted">Upload audio (wav/mp3/mp4). Detector in use: <b>{{ detector }}</b>. Needs ffmpeg for non-wav files.</p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="audio">
+      <input type="file" name="audio" accept="audio/*,video/*" required>
+      <button type="submit">Analyse</button>
+    </form>
+    {% if audio_result %}
+    <div class="result-box">
+      {% if audio_result.error %}<span class="muted">{{ audio_result.error }}</span>
+      {% elif audio_result.intervals %}<b>🚨 Siren detected:</b> {% for a,b in audio_result.intervals %}<span class="tag Red">{{ '%.1f'|format(a) }}s–{{ '%.1f'|format(b) }}s</span> {% endfor %}
+      {% else %}No siren detected.{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>{% endblock %}

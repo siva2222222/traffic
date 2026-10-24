@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}AI Traffic Management System{% endblock %}
+{% block body %}
+<style>
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.dash-head .live{background:var(--success-light);color:var(--success);border:1px solid #bfe8cf;padding:5px 12px;border-radius:16px;font-size:11px;font-weight:800;white-space:nowrap}
+.dash-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.dash-controls label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink-2);margin:0}
+.dash-controls input[type=checkbox]{width:16px;height:16px;padding:0;margin:0}
+.dash-controls button{margin:0}
+.emergency-alert{display:none}
+.emergency-alert.show{display:block}
+.lane-card .lane-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lane-card .lane-name{font-size:16px;font-weight:700;color:var(--primary)}
+.lane-upload{display:flex;gap:6px;margin-bottom:10px}
+.lane-upload input[type=file]{flex:1;min-width:0;margin:0;font-size:12px;padding:7px 9px}
+.lane-upload button{margin:0;white-space:nowrap}
+.video-wrap{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#0b0f1a;box-shadow:var(--shadow-sm)}
+.video-wrap img.feed{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:0;margin:0;box-shadow:none}
+.video-wrap .placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b93a8;background:#0f1729;font-size:12.5px;font-weight:600}
+.video-wrap .vtext{position:absolute;left:10px;top:9px;font-size:11.5px;line-height:1.65;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+.video-wrap .vtext .signal-red{color:#ff6b73}.video-wrap .vtext .signal-yellow{color:#ffd34c}.video-wrap .vtext .signal-green{color:#4ade80}
+.lane-stats{display:flex;gap:16px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.lane-stats b{color:var(--ink)}
+.lane-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.lane-foot form{margin:0}
+.lane-foot button{margin:0;padding:7px 12px;font-size:12.5px}
+.lane-source{font-size:11px;color:var(--muted-2)}
+.summary-rows .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
+.summary-rows .row:last-child{border-bottom:0}
+.summary-rows .row b{color:var(--ink)}
+.lane-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:860px){.lane-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="card dash-head">
+  <div>
+    <h2 style="margin-bottom:4px">AI Traffic Management System</h2>
+    <span class="muted">Live multi-lane vehicle &amp; signal monitoring</span>
+  </div>
+  <div class="dash-controls">
+    <span class="live">● LIVE · 4 VIDEO INPUTS</span>
+    <label><input id="sirenEnable" type="checkbox"> Siren detection</label>
+    <button class="red" onclick="stopAll()">■ Stop all</button>
+  </div>
+</div>
+
+<div id="alert" class="alert emergency-alert"></div>
+
+<section class="lane-grid">
+  {% for lane in ['North','East','West','South'] %}
+  {% set id=lane|lower %}
+  <div class="card lane-card">
+    <div class="lane-head">
+      <div class="lane-name">{{lane}} lane</div>
+      <span class="tag" id="{{id}}_status" style="background:var(--muted)">No video</span>
+    </div>
+    <form method="post" action="/admin/source/{{id}}" enctype="multipart/form-data" class="lane-upload">
+      <input type="hidden" name="action" value="video"><input type="hidden" name="loop" value="1">
+      <input type="file" name="video" accept="video/*" required>
+      <button type="submit">Upload</button>
+    </form>
+    <div class="video-wrap">
+      <img class="feed" src="/video_feed/{{id}}" id="{{id}}_feed" alt="{{lane}} video">
+      <div class="placeholder" id="{{id}}_placeholder">Upload {{lane}} video</div>
+      <div class="vtext">
+        <div>Density: <span id="{{id}}_density">Low</span></div>
+        <div>Vehicles: <span id="{{id}}_vehicles">0</span></div>
+        <div class="signal-green" id="{{id}}_signal">Signal: <span>GREEN</span></div>
+        <div>Green Time: <span id="{{id}}_green">0s</span></div>
+      </div>
+    </div>
+    <div class="lane-stats">
+      <div>Phase: <b id="{{id}}_phase">RED</b></div>
+      <div>Vehicles: <b id="{{id}}_count">0</b></div>
+      <div>Density: <b id="{{id}}_density2">LOW</b></div>
+    </div>
+    <div class="lane-foot">
+      <div class="lane-source" id="{{id}}_source">Source: no video</div>
+      <div style="display:flex;gap:6px">
+        <button class="red" type="button" id="{{id}}_resumebtn" style="display:none" onclick="laneAction('{{id}}','resume')">Resume</button>
+        <button class="grey" type="button" onclick="laneAction('{{id}}','pause')">Pause</button>
+        <form method="post" action="/admin/source/{{id}}"><input type="hidden" name="action" value="stop"><button class="grey" type="submit">Stop lane</button></form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="grid g3">
+  <div class="card"><h3>Traffic direction</h3><div class="summary-rows" id="directionRows"></div></div>
+  <div class="card"><h3>Vehicle classes</h3><div class="summary-rows" id="classRows"></div></div>
+  <div class="card"><h3>System status</h3><div class="summary-rows">
+    <div class="row"><span>Active videos</span><b id="active">0 / 4</b></div>
+    <div class="row"><span>Violations today</span><b id="violations">0</b></div>
+    <div class="row"><span>Updated</span><b id="updated">-</b></div>
+  </div></div>
+</section>
+
+<script>
+const LANES=['North','East','West','South'];
+function setPanel(lane,m){
+  const id=lane.toLowerCase(); m=m||{};
+  const counts=m.counts||{}; const density=m.density||{}; const signal=m.signal||{};
+  const total=Object.values(counts).reduce((a,b)=>a+(Number(b)||0),0);
+  const vals=Object.values(density).map(Number).filter(Number.isFinite); const max=vals.length?Math.max(...vals):0;
+  const den=max>=20?'High':max>=10?'Medium':max>0?'Low':'Low';
+  const status=(m.status||'idle');
+  const sig=status==='paused'?'red':(signal[lane]||signal[id]||'red');
+  const sigL=String(sig).toLowerCase();
+  const rem=m.signal_remaining??0;
+  document.getElementById(id+'_vehicles').textContent=total;
+  document.getElementById(id+'_count').textContent=total;
+  document.getElementById(id+'_density').textContent=den;
+  document.getElementById(id+'_density2').textContent=den.toUpperCase();
+  document.getElementById(id+'_signal').querySelector('span').textContent=String(sig).toUpperCase();
+  document.getElementById(id+'_phase').textContent=String(sig).toUpperCase();
+  document.getElementById(id+'_green').textContent=rem+'s';
+  const stEl=document.getElementById(id+'_status');
+  stEl.textContent=status==='paused'?(m.auto_paused?'PAUSED (EMERGENCY)':'PAUSED'):status.replace('running','RUNNING').toUpperCase();
+  stEl.style.background=status==='running'?'var(--success)':status==='paused'?'var(--danger)':(['loading model','analysing audio'].includes(status)?'var(--warning)':'var(--muted)');
+  document.getElementById(id+'_source').textContent='Source: '+(m.source||'no video');
+  const resumeBtn=document.getElementById(id+'_resumebtn');
+  if(resumeBtn)resumeBtn.style.display=(status==='paused')?'':'none';
+  const sigEl=document.getElementById(id+'_signal'); sigEl.className=sigL==='red'?'signal-red':sigL==='yellow'?'signal-yellow':'signal-green';
+  const ph=document.getElementById(id+'_phase'); ph.style.color=sigL==='red'?'#dc2626':sigL==='yellow'?'#d97706':'#16a34a';
+}
+async function tick(){
+ try{
+  const r=await fetch('/api/live',{cache:'no-store'}); if(!r.ok)return; const m=await r.json(); const p=m.panels||{};
+  let active=0, allClasses={}; let dirs={North:0,South:0,East:0,West:0};
+  LANES.forEach(l=>{const x=p[l]||{};setPanel(l,x);if(['running','loading model','analysing audio'].includes(x.status))active++;Object.entries(x.classes||{}).forEach(([k,v])=>allClasses[k]=(allClasses[k]||0)+v);Object.entries(x.direction_counts||{}).forEach(([k,v])=>dirs[k]=(dirs[k]||0)+v);});
+  document.getElementById('active').textContent=active+' / 4'; document.getElementById('violations').textContent=m.violations_today??0;document.getElementById('updated').textContent=new Date().toLocaleTimeString();
+  document.getElementById('directionRows').innerHTML=LANES.map(l=>`<div class="row"><span>${l}</span><b>${dirs[l]||0}</b></div>`).join('');
+  document.getElementById('classRows').innerHTML=Object.entries(allClasses).map(([k,v])=>`<div class="row"><span>${k}</span><b>${v}</b></div>`).join('')||'<div class="row"><span>No detections</span><b>0</b></div>';
+  const emergency=LANES.map(l=>p[l]||{}).find(x=>x.emergency_lane||x.siren); const a=document.getElementById('alert');
+  if(emergency){a.classList.add('show');a.textContent='🚑 EMERGENCY VEHICLE / SIREN DETECTED — priority signal active';}else a.classList.remove('show');
+ }catch(e){}
+}
+async function stopAll(){for(const l of LANES){try{await fetch('/admin/source/'+l.toLowerCase(),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'action=stop'});}catch(e){}}location.reload();}
+async function laneAction(id,action){try{await fetch('/admin/source/'+id,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'action='+action});tick();}catch(e){}}
+LANES.forEach(l=>{const im=document.getElementById(l.toLowerCase()+'_feed');im.onload=()=>document.getElementById(l.toLowerCase()+'_placeholder').style.display='none';im.onerror=()=>document.getElementById(l.toLowerCase()+'_placeholder').style.display='flex';});
+setInterval(tick,1000);tick();
+</script>
+{% endblock %}
