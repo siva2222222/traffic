@@ -479,7 +479,12 @@ class TrafficEngine:
             if tr["stat_since"] is not None and t - tr["stat_since"] >= C.PARK_SECONDS and self._in_any(cfg["nopark"], gp):
                 self._violate(frame, tid, tr, "Illegal Parking", t)
             # restricted-lane / divider entry
-            if self._in_any(cfg["restricted"], gp) and math.hypot(dx, dy) > 8:
+            span_r, dx_r, dy_r = _window(hist, 1.5)
+            if (
+                self._in_any(cfg["restricted"], gp)
+                and span_r > 0
+                and math.hypot(dx_r, dy_r) > 8
+            ):
                 self._violate(frame, tid, tr, "Lane Violation", t)
 
         # periodic DB logging
@@ -611,7 +616,9 @@ class TrafficEngine:
             if not cap.isOpened():
                 raise RuntimeError(f"Cannot open source: {source}")
             is_file = isinstance(source, str) and os.path.exists(source)
-            fps = cap.get(cv2.CAP_PROP_FPS) or 25
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            if not math.isfinite(fps) or fps <= 0:
+                fps = 25.0
             total = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
             siren_iv, monitor = [], None
             if not is_file and getattr(self, "mic", False):

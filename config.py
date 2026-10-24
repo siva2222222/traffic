@@ -24,21 +24,22 @@ class C:
     YOLO_MODEL = os.getenv("YOLO_MODEL", "yolov8n.pt")
     CONF = float(os.getenv("CONF", "0.35"))
 
-    # Smaller images generally improve CPU inference speed.
-    # Recheck lane zones after changing image dimensions.
-    WORK_WIDTH = int(os.getenv("WORK_WIDTH", "480"))
+    # Processing resolution. Increase to 640 if needed.
+    WORK_WIDTH = max(
+        320, int(os.getenv("WORK_WIDTH", "480"))
+    )
 
-    # Process every second frame to reduce CPU load.
+    # 1 = process every frame; 2 = every second frame.
     PROCESS_EVERY = max(
-        1, int(os.getenv("PROCESS_EVERY", "2"))
+        1, int(os.getenv("PROCESS_EVERY", "1"))
     )
 
-    # Drop overdue frames only if engine.py implements this setting.
+    # 0 = do not intentionally discard late video frames.
     SKIP_LATE_FRAMES = (
-        os.getenv("SKIP_LATE_FRAMES", "1") == "1"
+        os.getenv("SKIP_LATE_FRAMES", "0") == "1"
     )
 
-    # 1.0 = normal playback if engine.py uses this as a multiplier.
+    # 1.0 = normal playback speed.
     PLAYBACK_SPEED = max(
         0.05, float(os.getenv("PLAYBACK_SPEED", "1.0"))
     )
@@ -50,34 +51,21 @@ class C:
 
     OCR_MIN_BOX_H = int(os.getenv("OCR_MIN_BOX_H", "45"))
     OCR_MAX_TRIES = int(os.getenv("OCR_MAX_TRIES", "6"))
-
-    # Check text less frequently to reduce CPU usage.
-    OCR_EVERY_N = int(os.getenv("OCR_EVERY_N", "12"))
-    OCR_MAX_PER_FRAME = int(
-        os.getenv("OCR_MAX_PER_FRAME", "1")
+    OCR_EVERY_N = max(1, int(os.getenv("OCR_EVERY_N", "12")))
+    OCR_MAX_PER_FRAME = max(
+        0, int(os.getenv("OCR_MAX_PER_FRAME", "1"))
     )
 
     OCR_KEYWORDS = {
         "ambulance": [
-            "AMBULAN",
-            "EMERGENCY",
-            "108",
-            "102",
-            "PARAMEDIC",
-            "MEDICAL",
+            "AMBULAN", "EMERGENCY", "108", "102",
+            "PARAMEDIC", "MEDICAL",
         ],
         "fire_engine": [
-            "FIRE ENGINE",
-            "FIRE SERVICE",
-            "FIRE BRIGADE",
-            "FIRE TENDER",
-            "FIRE FORCE",
-            "FIRE DEPT",
-            "FIRE RESCUE",
-            "FIRE DEPARTMENT",
-            "FIRE",
-            "DFES",
-            "RESCUE",
+            "FIRE ENGINE", "FIRE SERVICE", "FIRE BRIGADE",
+            "FIRE TENDER", "FIRE FORCE", "FIRE DEPT",
+            "FIRE RESCUE", "FIRE DEPARTMENT", "FIRE",
+            "DFES", "RESCUE",
         ],
     }
 
@@ -93,8 +81,8 @@ class C:
     EMERG_CLF_MAX_TRIES = int(
         os.getenv("EMERG_CLF_MAX_TRIES", "8")
     )
-    EMERG_CLF_EVERY_N = int(
-        os.getenv("EMERG_CLF_EVERY_N", "5")
+    EMERG_CLF_EVERY_N = max(
+        1, int(os.getenv("EMERG_CLF_EVERY_N", "5"))
     )
 
     # --------------------------------------------------
@@ -110,9 +98,7 @@ class C:
     CLIP_MODEL_HF = os.getenv(
         "CLIP_MODEL_HF", "openai/clip-vit-base-patch32"
     )
-    CLIP_MODEL_OPEN = os.getenv(
-        "CLIP_MODEL_OPEN", "ViT-B-32"
-    )
+    CLIP_MODEL_OPEN = os.getenv("CLIP_MODEL_OPEN", "ViT-B-32")
     CLIP_PRETRAIN_OPEN = os.getenv(
         "CLIP_PRETRAIN_OPEN", "laion2b_s34b_b79k"
     )
@@ -126,15 +112,16 @@ class C:
     CLIP_MIN_MARGIN = float(
         os.getenv("CLIP_MIN_MARGIN", "0.006")
     )
-    CLIP_MIN_BOX_H = int(
-        os.getenv("CLIP_MIN_BOX_H", "40")
-    )
+    CLIP_MIN_BOX_H = int(os.getenv("CLIP_MIN_BOX_H", "40"))
 
-    # Fewer CLIP checks reduce CPU use but may delay recognition.
-    CLIP_EVERY_N = int(os.getenv("CLIP_EVERY_N", "12"))
-    CLIP_MAX_TRIES = int(os.getenv("CLIP_MAX_TRIES", "10"))
-    CLIP_MAX_PER_FRAME = int(
-        os.getenv("CLIP_MAX_PER_FRAME", "1")
+    CLIP_EVERY_N = max(
+        1, int(os.getenv("CLIP_EVERY_N", "12"))
+    )
+    CLIP_MAX_TRIES = max(
+        0, int(os.getenv("CLIP_MAX_TRIES", "10"))
+    )
+    CLIP_MAX_PER_FRAME = max(
+        0, int(os.getenv("CLIP_MAX_PER_FRAME", "1"))
     )
 
     # --------------------------------------------------
@@ -156,13 +143,9 @@ class C:
     # --------------------------------------------------
     # TRAFFIC VIOLATION SETTINGS
     # --------------------------------------------------
-    SPEED_LIMIT_KMH = float(
-        os.getenv("SPEED_LIMIT", "40")
-    )
-
+    SPEED_LIMIT_KMH = float(os.getenv("SPEED_LIMIT", "40"))
     PARK_SECONDS = 10
 
-    # Wrong-way detection thresholds.
     WW_WINDOW = 1.5
     WW_SPAN = 1.0
     WW_DIST = 35
@@ -197,18 +180,14 @@ class C:
     # --------------------------------------------------
     # OPTIONAL LLM INTEGRATION
     # --------------------------------------------------
-    LLM_PROVIDER = os.getenv(
-        "LLM_PROVIDER", "none"
-    ).lower()
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "none").lower()
 
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL = os.getenv(
         "GEMINI_MODEL", "gemini-2.0-flash"
     )
 
-    ANTHROPIC_API_KEY = os.getenv(
-        "ANTHROPIC_API_KEY", ""
-    )
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL = os.getenv(
         "ANTHROPIC_MODEL", "claude-sonnet-5"
     )
