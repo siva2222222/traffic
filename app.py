@@ -329,7 +329,14 @@ def admin_video():
                 db.x("INSERT INTO notifications(user_id,msg,created_at) VALUES(?,?,?)",
                      (uid, "Emergency vehicle in uploaded video: " + note, db.now()))
 
-        job = video_analyze.start_job(path, name=f.filename, on_detect=on_detect)
+        # Uploaded-video scanning is visual-only for faster processing.
+        # Set check_audio=True if this upload route should also detect sirens.
+        job = video_analyze.start_job(
+            path,
+            name=f.filename,
+            on_detect=on_detect,
+            check_audio=False,
+        )
         return redirect(url_for("admin_video", job=job.id))
 
     status = {"clip": EV.backend_name(), "ocr": bool(C.ENABLE_OCR)}

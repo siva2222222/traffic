@@ -351,12 +351,24 @@ _jobs = {}
 _jobs_lock = threading.Lock()
 
 
-def start_job(path, name="", on_detect=None):
-    job = ScanJob(path, name=name, on_detect=on_detect).start()
+def start_job(path, name="", on_detect=None, check_audio=True):
+    """Start a background scan.
+
+    check_audio=False skips optional siren analysis to reduce processing time.
+    Keep it True when the uploaded-video workflow also needs audio-based siren detection.
+    """
+    job = ScanJob(
+        path,
+        name=name,
+        on_detect=on_detect,
+        check_audio=check_audio,
+    ).start()
+
     with _jobs_lock:
         _jobs[job.id] = job
-        if len(_jobs) > 20:                                          # keep the last 20 scans only
-            for k in sorted(_jobs, key=lambda k: _jobs[k].started)[:-20]:
+        if len(_jobs) > 20:  # keep the last 20 scans only
+            oldest = sorted(_jobs, key=lambda k: _jobs[k].started)[:-20]
+            for k in oldest:
                 _jobs.pop(k, None)
     return job
 
