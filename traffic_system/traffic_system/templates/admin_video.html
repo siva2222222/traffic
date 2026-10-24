@@ -1,0 +1,125 @@
+{% extends "base.html" %}{% block title %}Video Detection{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.vd-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.vd-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid}
+.vd-ok{color:var(--success);border-color:#bfe8cf;background:var(--success-light)}
+.vd-off{color:var(--warning);border-color:#f3d9a3;background:var(--warning-light)}
+.vd-bar{height:10px;background:var(--surface-alt);border-radius:999px;overflow:hidden;margin:10px 0 6px}
+.vd-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#818cf8);width:0;transition:width .4s}
+.vd-alarm{background:var(--danger-light);border:1px solid #f3c6c6;color:#991b1b;padding:14px 16px;border-radius:10px;margin:14px 0}
+.vd-clear{background:var(--success-light);border:1px solid #bfe8cf;color:#166534;padding:12px 16px;border-radius:10px;margin:14px 0}
+.vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:12px}
+.vd-shot{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+.vd-shot img{width:100%;display:block}
+.vd-cap{padding:8px 10px;font-size:12.5px}
+.vd-cap b{font-size:13px}
+.vd-m{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted)}
+.vd-note{font-size:12.5px;color:var(--muted);line-height:1.5;margin:6px 0 0}
+.vd-stat{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-top:4px;align-items:center}
+.vd-stat button{margin:0;padding:6px 12px;font-size:12px}
+</style>
+
+<div class="card">
+ <div class="vd-head">
+  <div>
+   <h2 style="margin:0">{{ icon('video') }}Emergency Vehicle Detection — Video Upload</h2>
+   <p class="muted" style="margin:4px 0 0">Upload a traffic video. Every vehicle is tracked and checked;
+   you get the <b>timestamp and a snapshot</b> of each ambulance or fire engine that appears.</p>
+  </div>
+  <div>
+   <span class="vd-pill {{ 'vd-ok' if status.clip != 'none' else 'vd-off' }}">CLIP: {{ status.clip }}</span>
+   <span class="vd-pill {{ 'vd-ok' if status.ocr else 'vd-off' }}">OCR: {{ 'on' if status.ocr else 'off' }}</span>
+   <span class="vd-pill vd-ok">Siren audio: on</span>
+  </div>
+ </div>
+
+ {% if status.clip == 'none' %}
+ <p class="vd-note"><b>Zero-shot recogniser is not installed.</b> Install it once with
+ <code>pip install transformers</code> and restart, or detection falls back to OCR text only.</p>
+ {% endif %}
+
+ <form method="post" enctype="multipart/form-data" style="margin-top:14px">
+  <input type="file" name="video" accept="video/*" required>
+  <button style="margin-left:10px">Scan video</button>
+ </form>
+ <p class="vd-note">Scanning runs in the background — this page updates by itself. On CPU expect
+ roughly 1–3 minutes per minute of footage. You can leave and come back; the scan keeps running.</p>
+</div>
+
+{% if job_id %}
+<div class="card" id="vd-live" data-job="{{ job_id }}">
+ <h3 style="margin:0 0 2px">Scan: <span class="vd-m" id="vd-name">—</span></h3>
+ <div class="vd-bar"><i id="vd-fill"></i></div>
+ <div class="vd-stat">
+  <span>Status: <b id="vd-state">starting…</b></span>
+  <span>Progress: <b id="vd-pct">0%</b></span>
+  <span>Vehicles tracked: <b id="vd-veh">0</b></span>
+  <span>Emergency found: <b id="vd-cnt">0</b></span>
+  <span>Elapsed: <b id="vd-el">0s</b></span>
+  <button class="grey" type="button" id="vd-stop" onclick="stopScan()">■ Stop scan</button>
+ </div>
+ <div id="vd-banner"></div>
+ <div id="vd-siren" class="vd-note"></div>
+ <div class="vd-grid" id="vd-shots"></div>
+ <p class="vd-note" id="vd-msg"></p>
+</div>
+
+<script>
+(function(){
+ var box=document.getElementById('vd-live'), job=box.dataset.job, done=false;
+ window.stopScan=function(){
+  document.getElementById('vd-stop').disabled=true;
+  fetch('/api/video/stop/'+job,{method:'POST'}).catch(function(){});
+ };
+ function esc(s){return String(s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];});}
+ function render(s){
+  document.getElementById('vd-name').textContent=s.name;
+  document.getElementById('vd-fill').style.width=(s.progress||0)+'%';
+  document.getElementById('vd-state').textContent=s.state;
+  document.getElementById('vd-pct').textContent=Math.round(s.progress||0)+'%';
+  document.getElementById('vd-veh').textContent=s.vehicles_seen;
+  document.getElementById('vd-cnt').textContent=s.detections.length;
+  document.getElementById('vd-el').textContent=s.elapsed+'s';
+  document.getElementById('vd-stop').style.display=(s.state==='done'||s.state==='error'||s.state==='stopped')?'none':'';
+
+  var b=document.getElementById('vd-banner');
+  if(s.detections.length){
+   b.className='vd-alarm';
+   b.innerHTML='<h3 style="margin:0 0 4px">EMERGENCY VEHICLE DETECTED</h3>'+
+    '<div>'+s.emergency_types.map(function(t){return '<b>'+esc(t.replace('_',' ').toUpperCase())+'</b>';}).join(', ')+
+    ' — '+s.detections.length+' appearance(s). Signal action: <b>PRE-EMPT to GREEN</b>.</div>';
+  } else if(s.state==='done'){
+   b.className='vd-clear'; b.textContent='No ambulance or fire engine found in this video. '+s.vehicles_seen+' vehicle(s) tracked.';
+  } else { b.className=''; b.textContent=''; }
+
+  document.getElementById('vd-siren').innerHTML = s.siren_intervals.length
+   ? 'Siren detected in audio at: '+s.siren_intervals.map(function(p){return p[0]+'s–'+p[1]+'s';}).join(', ')
+   : '';
+
+  var g=document.getElementById('vd-shots');
+  g.innerHTML = s.detections.map(function(d){
+   return '<div class="vd-shot"><img src="/static/'+esc(d.snapshot)+'" alt="detection">'+
+    '<div class="vd-cap"><b>'+esc(d.type.replace('_',' ').toUpperCase())+'</b> at '+esc(d.time)+
+    '<div class="vd-m">track '+d.track+' · conf '+d.conf+' · via '+esc(d.method)+' · YOLO said '+esc(d.yolo_class)+'</div></div></div>';
+  }).join('');
+
+  var m=document.getElementById('vd-msg');
+  if(s.state==='error'){ m.textContent='Error: '+s.error; }
+  else if(s.state==='done'&&!s.detections.length&&s.detector==='none'){
+   m.textContent='CLIP is not installed, so only OCR text matching ran. Install with: pip install transformers';
+  } else { m.textContent=''; }
+ }
+ function poll(){
+  fetch('/api/video/status/'+job).then(function(r){return r.json();}).then(function(s){
+   if(s.error&&!s.state){ document.getElementById('vd-msg').textContent=s.error; return; }
+   render(s);
+   if(s.state==='done'||s.state==='error'||s.state==='stopped'){ done=true; return; }
+   setTimeout(poll,1500);
+  }).catch(function(){ setTimeout(poll,3000); });
+ }
+ poll();
+})();
+</script>
+{% endif %}
+{% endblock %}
