@@ -1,23 +1,14 @@
-import os
-import urllib.request
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
-import numpy as np
 
 st.set_page_config(page_title="Traffic Monitoring System", layout="wide")
 st.title("🚗 Traffic Monitoring & Detection System")
 
-# Cache the model so it downloads and loads only once into RAM
 @st.cache_resource
 def load_model():
-    model_path = "best.pt"
-    # If the weight file isn't in the root folder, download it directly from Hugging Face
-    if not os.path.exists(model_path):
-        with st.spinner("Downloading YOLO model weights..."):
-            url = "https://huggingface.co/spaces/Siva11234567/traffic/resolve/main/best.pt"
-            urllib.request.urlretrieve(url, model_path)
-    return YOLO(model_path)
+    # Automatically downloads official YOLOv8 nano model
+    return YOLO("yolov8n.pt") 
 
 model = load_model()
 
