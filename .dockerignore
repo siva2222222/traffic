@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+venv
+.venv
+.git
+.pytest_cache
+static/uploads
+static/evidence
+data/traffic.db
+training_clips
+*.md
