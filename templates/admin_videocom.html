@@ -1,0 +1,142 @@
+
+<form id="video-upload-form"
+      method="post"
+      enctype="multipart/form-data"
+      style="margin-top:14px">
+
+  <input id="video-file"
+         type="file"
+         name="video"
+         accept=".mp4,.avi,.mov,.mkv,.webm,video/*"
+         required>
+
+  <button id="upload-button" type="submit" style="margin-left:10px">
+    Scan video
+  </button>
+
+  <div id="upload-status" role="status"
+       aria-live="polite"
+       style="display:none;margin-top:14px">
+    <div id="upload-label">Preparing upload…</div>
+    <div style="height:10px;background:var(--surface-alt);
+                border-radius:999px;overflow:hidden;margin-top:8px">
+      <div id="upload-progress"
+           style="height:100%;width:0;background:var(--primary);
+                  transition:width .15s"></div>
+    </div>
+    <div id="upload-details" class="vd-note">Please keep this page open.</div>
+  </div>
+</form>
+
+<script>
+(function () {
+  const form = document.getElementById('video-upload-form');
+  if (!form) return;
+
+  const fileInput = document.getElementById('video-file');
+  const button = document.getElementById('upload-button');
+  const status = document.getElementById('upload-status');
+  const label = document.getElementById('upload-label');
+  const bar = document.getElementById('upload-progress');
+  const details = document.getElementById('upload-details');
+
+  let submitting = false;
+
+  function formatBytes(bytes) {
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(1) + ' KB';
+    }
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    if (submitting) return;
+
+    const file = fileInput.files[0];
+    if (!file) {
+      fileInput.reportValidity();
+      return;
+    }
+
+    const allowed = /\.(mp4|avi|mov|mkv|webm)$/i;
+    if (!allowed.test(file.name)) {
+      alert('Choose an MP4, AVI, MOV, MKV or WEBM video.');
+      return;
+    }
+
+    submitting = true;
+    button.disabled = true;
+    fileInput.disabled = true;
+    button.textContent = 'Uploading…';
+    status.style.display = 'block';
+    label.textContent = 'Uploading video: 0%';
+    bar.style.width = '0%';
+    details.textContent = '0 MB of ' + formatBytes(file.size);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', form.action || window.location.href, true);
+    xhr.responseType = 'text';
+
+    xhr.upload.addEventListener('progress', function (e) {
+      if (!e.lengthComputable) {
+        label.textContent = 'Uploading video…';
+        return;
+      }
+
+      const percent = Math.round(e.loaded / e.total * 100);
+      bar.style.width = percent + '%';
+      label.textContent = 'Uploading video: ' + percent + '%';
+      details.textContent =
+        formatBytes(e.loaded) + ' of ' + formatBytes(e.total);
+    });
+
+    xhr.upload.addEventListener('load', function () {
+      label.textContent = 'Upload sent. Waiting for the server…';
+      details.textContent =
+        'The server is saving the video and starting detection.';
+      button.textContent = 'Starting scan…';
+    });
+
+    xhr.addEventListener('load', function () {
+      if (xhr.status >= 200 && xhr.status < 400) {
+        // Follow the server redirect to the scan results page.
+        window.location.assign(
+          new URL(xhr.responseURL, window.location.href).href
+        );
+      } else {
+        submitting = false;
+        button.disabled = false;
+        fileInput.disabled = false;
+        button.textContent = 'Scan video';
+        label.textContent = 'Upload failed (' + xhr.status + ')';
+        details.textContent =
+          'Please try again. Check the server logs if this continues.';
+      }
+    });
+
+    xhr.addEventListener('error', function () {
+      submitting = false;
+      button.disabled = false;
+      fileInput.disabled = false;
+      button.textContent = 'Scan video';
+      label.textContent = 'Network error';
+      details.textContent =
+        'Check your connection and try again.';
+    });
+
+    xhr.addEventListener('timeout', function () {
+      submitting = false;
+      button.disabled = false;
+      fileInput.disabled = false;
+      button.textContent = 'Scan video';
+      label.textContent = 'Upload timed out';
+      details.textContent = 'Please try again.';
+    });
+
+    xhr.timeout = 15 * 60 * 1000;
+    xhr.send(new FormData(form));
+  });
+})();
+</script>
