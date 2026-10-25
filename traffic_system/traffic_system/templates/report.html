@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block body %}<div class="card phone"><h2>Report a Traffic Issue</h2>
+<form method="post" enctype="multipart/form-data">
+<select name="type">{% for t in types %}<option>{{ t }}</option>{% endfor %}</select>
+<textarea name="description" rows="4" placeholder="Describe what happened (vehicles involved, injuries, blockage...)" required></textarea>
+<input name="location" id="loc" placeholder="Location / landmark" required>
+<input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
+<button type="button" class="grey" onclick="gps()">📍 Use my location</button> <span id="gs" class="muted"></span>
+<p class="muted">Photo / video (optional)</p><input type="file" name="photo" accept="image/*,video/*" capture="environment">
+<button>Submit report</button></form></div>
+<script>function gps(){navigator.geolocation.getCurrentPosition(p=>{lat.value=p.coords.latitude;lng.value=p.coords.longitude;gs.textContent='Location captured';if(!loc.value)loc.value=p.coords.latitude.toFixed(5)+', '+p.coords.longitude.toFixed(5)},()=>gs.textContent='Location denied')}</script>{% endblock %}

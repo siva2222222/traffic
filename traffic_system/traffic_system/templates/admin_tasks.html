@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% block title %}Tasks{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.t-stats{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.t-stat{flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.t-stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.t-stat .n{font-size:24px;font-weight:800;margin-top:4px}
+</style>
+{% set pending=rows|selectattr('status','equalto','Assigned')|list|length + rows|selectattr('status','equalto','In Progress')|list|length %}
+{% set completed=rows|selectattr('status','equalto','Completed')|list|length %}
+<div class="card">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<h2>{{ icon('tasks') }}Task management</h2>
+<form method="post" action="/admin/tasks/delete-all" onsubmit="return confirm('Delete ALL tasks? This cannot be undone.')"><button class="red" type="submit">Delete all</button></form>
+</div>
+<div class="t-stats">
+  <div class="t-stat"><div class="l">Total tasks</div><div class="n">{{ rows|length }}</div></div>
+  <div class="t-stat"><div class="l">Pending / active</div><div class="n">{{ pending }}</div></div>
+  <div class="t-stat"><div class="l">Completed</div><div class="n">{{ completed }}</div></div>
+</div>
+<div style="overflow-x:auto">
+<table>
+<tr><th>Task ID</th><th>Issue type</th><th>Location</th><th>Assigned to</th><th>Assigned</th><th>Completed by</th><th>Completed</th><th>Time taken</th><th>Status</th><th>Remarks / evidence</th></tr>
+{% for t in rows %}<tr><td>{{ t.task_code }}</td><td>{{ t.type }} <span class="tag {{ t.priority }}">{{ t.priority }}</span></td><td>{{ t.location }}</td><td>{{ t.officer }} <span class="muted">({{ t.assigned_by }})</span></td>
+<td>{{ t.assigned_at }}</td><td>{{ t.officer if t.status=='Completed' else '-' }}</td><td>{{ t.completed_at or '-' }}</td><td>{{ (t.time_taken ~ ' min') if t.time_taken is not none else '-' }}</td><td><span class="tag {{ t.status }}">{{ t.status }}</span></td>
+<td>{{ t.remarks or '' }} {% if t.evidence %}<a href="/static/{{ t.evidence }}" target="_blank">photo</a>{% endif %}</td></tr>
+{% else %}<tr><td colspan="10" class="muted">No tasks.</td></tr>{% endfor %}
+</table>
+</div>
+</div>{% endblock %}

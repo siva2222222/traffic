@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block title %}Notifications{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<div class="card notif-card">
+<h2>{{ icon('bell') }}Notifications</h2>
+<div class="notif-list">
+{% for r in rows %}
+  <div class="notif-item {{ 'unread' if not r.is_read }}">
+    <div class="notif-ic">{{ icon('alert', 16) }}</div>
+    <div class="notif-body">
+      <p class="notif-msg">{{ r.msg }}</p>
+      <span class="notif-time">{{ r.created_at }}</span>
+    </div>
+    {% if not r.is_read %}<span class="notif-dot"></span>{% endif %}
+  </div>
+{% else %}
+  <div class="notif-empty">{{ icon('bell', 30) }}<p>Nothing yet</p><span class="muted">New alerts will show up here.</span></div>
+{% endfor %}
+</div>
+</div>{% endblock %}

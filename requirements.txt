@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
 torchvision
@@ -5,3 +6,24 @@ ultralytics
 opencv-python-headless
 streamlit
 Pillow
+=======
+flask>=3.0
+werkzeug>=3.0
+requests>=2.31
+numpy>=1.24,<2.0
+scipy>=1.10
+opencv-python>=4.8
+ultralytics==8.3.40
+lap>=0.5.12          # required by ByteTrack
+torch==2.5.1          # CPU wheel installed from the PyTorch CPU index in Dockerfile
+torchvision==0.20.1   # must match torch 2.5.1 to provide torchvision.ops.nms
+reportlab>=4.0
+easyocr>=1.7          # reads "AMBULANCE" / "FIRE ENGINE" etc. text on vehicles — ON by default (config.py ENABLE_OCR)
+transformers>=4.40    # CLIP zero-shot ambulance / fire-engine recognition — THE key dependency for
+                      # emergency detection. Stock yolov8n.pt has no such classes; without this they
+                      # stay 'car'/'bus'/'truck'. Weights (~350 MB) download once, then run offline on CPU.
+pillow>=10.0          # required by the CLIP image preprocessor
+# optional:
+#   sounddevice      -> live microphone siren monitor (tick "microphone" on Source page)
+#   ffmpeg (system)  -> extract audio from uploaded videos for siren detection
+>>>>>>> origin/master

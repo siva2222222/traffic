@@ -1,0 +1,19 @@
+services:
+  traffic-system:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - uploads:/app/static/uploads
+      - evidence:/app/static/evidence
+      - dbdata:/app/data
+      - modelcache:/root/.cache
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  evidence:
+  dbdata:
+  modelcache:

@@ -1,0 +1,95 @@
+{% extends "base.html" %}{% block title %}AI Assistant{% endblock %}{% block body %}
+{% from "_icons.html" import icon %}
+<style>
+.ai-card{max-width:820px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:520px}
+.ai-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ai-head .ic{width:42px;height:42px;border-radius:12px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none}
+.ai-head h2{margin:0}
+.ai-head .sub{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.chip{background:var(--surface-alt);border:1px solid var(--border);color:var(--ink-2);font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:99px;cursor:pointer;width:auto;margin:0}
+.chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.chat{flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:18px;background:var(--surface-alt);margin-bottom:12px;display:flex;flex-direction:column;gap:14px}
+.msg-row{display:flex;gap:10px;max-width:88%}
+.msg-row.me{align-self:flex-end;flex-direction:row-reverse}
+.msg-row .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700}
+.msg-row.bot .av{background:linear-gradient(135deg,var(--primary),#818cf8)}
+.msg-row.me .av{background:linear-gradient(135deg,#64748b,#94a3b8)}
+.bubble{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 15px;font-size:13.5px;line-height:1.6;box-shadow:var(--shadow-sm)}
+.msg-row.me .bubble{background:var(--primary);color:#fff;border-color:var(--primary)}
+.bubble p{margin:0 0 8px}.bubble p:last-child{margin-bottom:0}
+.bubble ul,.bubble ol{margin:4px 0 8px;padding-left:20px}
+.bubble li{margin:3px 0}
+.bubble code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:5px;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+.msg-row.me .bubble code{background:rgba(255,255,255,.18)}
+.bubble strong{font-weight:700}
+.typing{display:inline-flex;gap:4px;padding:4px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--muted-2);animation:bounce 1.2s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.ai-input{display:flex;gap:8px;flex:none}
+.ai-input input{flex:1;margin:0}
+.ai-input button{margin:0;white-space:nowrap}
+</style>
+<div class="card ai-card">
+  <div class="ai-head">
+    <div class="ic">{{ icon('bot', 20) }}</div>
+    <div><h2>AI Assistant</h2><div class="sub">Ask about live traffic data — violations, tasks, density, emergencies, reports</div></div>
+  </div>
+  <div class="chips">
+    <button type="button" class="chip" onclick="ask('How many violations today?')">Violations today</button>
+    <button type="button" class="chip" onclick="ask('What are the pending tasks?')">Pending tasks</button>
+    <button type="button" class="chip" onclick="ask('Which lane is busiest right now?')">Busiest lane</button>
+    <button type="button" class="chip" onclick="ask('Any emergency vehicle events recently?')">Emergencies</button>
+    <button type="button" class="chip" onclick="ask('Summarize citizen reports today')">Reports</button>
+  </div>
+  <div class="chat" id="chat">
+    <div class="msg-row bot"><div class="av">{{ icon('bot', 15) }}</div><div class="bubble">Ask about violations, pending tasks, density, emergencies, reports…</div></div>
+  </div>
+  <div class="ai-input">
+    <input id="q" placeholder="e.g. How many red light violations today?" onkeydown="if(event.key=='Enter')send()">
+    <button onclick="send()">{{ icon('send', 15) }} Send</button>
+  </div>
+</div>
+<script>
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+// Minimal markdown -> HTML: escapes first, then bold/code/lists/paragraphs. No external libs.
+function mdToHtml(raw){
+  const lines=escapeHtml(raw).split(/\r?\n/);
+  let html='',inUl=false,inOl=false,para=[];
+  const flushPara=()=>{if(para.length){html+='<p>'+para.join(' ')+'</p>';para=[]}};
+  const closeLists=()=>{if(inUl){html+='</ul>';inUl=false}if(inOl){html+='</ol>';inOl=false}};
+  const inline=t=>t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/(^|[^*])\*(?!\*)([^*]+)\*(?!\*)/g,'$1<em>$2</em>');
+  for(const line of lines){
+    const t=line.trim();
+    if(!t){flushPara();closeLists();continue}
+    let m;
+    if((m=t.match(/^[-*]\s+(.*)/))){flushPara();if(!inUl){closeLists();html+='<ul>';inUl=true}html+='<li>'+inline(m[1])+'</li>';continue}
+    if((m=t.match(/^\d+[.)]\s+(.*)/))){flushPara();if(!inOl){closeLists();html+='<ol>';inOl=true}html+='<li>'+inline(m[1])+'</li>';continue}
+    closeLists();para.push(inline(t));
+  }
+  flushPara();closeLists();
+  return html||'<p></p>';
+}
+function addMsg(role,text,asHtml){
+  const row=document.createElement('div');row.className='msg-row '+role;
+  const av=document.createElement('div');av.className='av';av.textContent=role==='me'?'{{ user.name[0]|upper }}':'🤖';
+  const b=document.createElement('div');b.className='bubble';
+  if(asHtml)b.innerHTML=mdToHtml(text);else b.textContent=text;
+  row.appendChild(av);row.appendChild(b);chat.appendChild(row);chat.scrollTop=chat.scrollHeight;
+  return b;
+}
+async function ask(text){q.value=text;await send()}
+async function send(){
+  const v=q.value.trim();if(!v)return;q.value='';
+  addMsg('me',v,false);
+  const typingRow=document.createElement('div');typingRow.className='msg-row bot';
+  typingRow.innerHTML='<div class="av">🤖</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
+  chat.appendChild(typingRow);chat.scrollTop=chat.scrollHeight;
+  try{
+    const r=await (await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:v})})).json();
+    typingRow.remove();addMsg('bot',r.answer,true);
+  }catch(e){typingRow.remove();addMsg('bot','Something went wrong reaching the assistant.',false)}
+}
+</script>
+{% endblock %}
